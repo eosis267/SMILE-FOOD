@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23079B48'/><path d='M30 65 Q50 85 70 65' stroke='white' stroke-width='8' fill='none' stroke-linecap='round'/><circle cx='36' cy='40' r='7' fill='white'/><circle cx='64' cy='40' r='7' fill='white'/></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="SMILE FOOD — Food Order, Delivery, Payment, and Transaction Processing System & Admin Dashboard" />
+    <title>SMILE FOOD — Order, Delivery & Transaction Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('smilefood_dark_mode');
+          var isDark = saved ? JSON.parse(saved) : false;
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-[#F5F6F5] dark:bg-[#0F1311] text-[#171917] dark:text-[#F0F5F2] antialiased selection:bg-[#079B48] selection:text-white transition-colors duration-200">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
