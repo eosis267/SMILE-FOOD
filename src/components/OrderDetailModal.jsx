@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import IconsaxIcon from './IconsaxIcon';
 import { useApp } from '../context/AppContext';
-import { ORDER_STATES, VALID_TRANSITIONS } from '../data/ledgerService';
+import { VALID_TRANSITIONS } from '../data/ledgerService';
+import { maskPhoneNumber } from '../lib/apiSecurity';
 
 export const OrderDetailModal = () => {
   const { 
@@ -142,7 +143,7 @@ export const OrderDetailModal = () => {
               {selectedOrder.customer.name}
             </p>
             <p className="text-[12px] text-[#777D79] dark:text-[#8E9A92]">
-              {selectedOrder.customer.phone}
+              {maskPhoneNumber(selectedOrder.customer.phone)}
             </p>
             <p className="text-[12px] text-[#171917] dark:text-[#F0F5F2] mt-1 flex items-center gap-1.5">
               <IconsaxIcon name="location" size={14} className="text-[#079B48] shrink-0" />

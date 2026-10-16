@@ -19,7 +19,7 @@ const INITIAL_LEDGER_ENTRIES = [
 export const AdminLedgerPage = () => {
   const { showToast } = useApp();
   const [filter, setFilter] = useState('ALL');
-  const [entries, setEntries] = useState(INITIAL_LEDGER_ENTRIES);
+  const [entries] = useState(INITIAL_LEDGER_ENTRIES);
 
   // Financial Split Metrics
   const totalVolume = 61650.00;

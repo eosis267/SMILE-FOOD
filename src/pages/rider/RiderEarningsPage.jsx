@@ -32,7 +32,6 @@ const maxWeekly = Math.max(...WEEKLY_EARNINGS.map(d => d.amount));
 
 export const RiderEarningsPage = () => {
   const { showToast } = useApp();
-  const [activeTab, setActiveTab] = useState('weekly');
 
   const totalThisWeek = WEEKLY_EARNINGS.reduce((s, d) => s + d.amount, 0);
   const totalBreakdown = EARNINGS_BREAKDOWN.reduce((s, d) => s + d.amount, 0);

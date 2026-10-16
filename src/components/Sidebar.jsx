@@ -11,7 +11,7 @@ export const Sidebar = () => {
   const mainNavLinks = [
     { name: 'Overview', path: '/', icon: 'overview' },
     { name: 'Orders', path: '/orders', icon: 'orders', badge: pendingOrdersCount },
-    { name: 'Messages', path: '/messages', icon: 'messages', badge: 2 },
+    { name: 'Messages', path: '/messages', icon: 'messages', badge: unreadCount },
     { name: 'Statistics', path: '/statistics', icon: 'statistics' },
     { name: 'Wallet', path: '/wallet', icon: 'wallet' },
     { name: 'Profile', path: '/profile', icon: 'profile' },

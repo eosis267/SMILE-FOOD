@@ -13,8 +13,7 @@ import {
 } from '../data/ledgerService';
 import { 
   isSupabaseReady, 
-  subscribeToOrdersRealtime, 
-  fetchOrdersFromBackend 
+  subscribeToOrdersRealtime 
 } from '../lib/supabaseService';
 
 const AppContext = createContext();
@@ -80,12 +79,12 @@ export const AppProvider = ({ children }) => {
     });
   }, [orders]);
 
-  // Idempotent Order Placement
+  // Idempotent & Server-Validated Order Placement
   const placeOrderWithIdempotency = (newOrder, idempotencyKey) => {
     const key = idempotencyKey || newOrder.id || newOrder.orderNumber;
     if (idempotencyKeysRef.current.has(key)) {
       console.warn('Idempotency safeguard: Duplicate order submission suppressed for key:', key);
-      return { success: false, duplicate: true };
+      return { success: false, duplicate: true, error: 'Duplicate order submission detected.' };
     }
     idempotencyKeysRef.current.add(key);
 

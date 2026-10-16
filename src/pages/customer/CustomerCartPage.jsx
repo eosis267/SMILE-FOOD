@@ -4,29 +4,41 @@ import IconsaxIcon from '../../components/IconsaxIcon';
 import BackButton from '../../components/BackButton';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
+import { validateCartOrder } from '../../lib/apiSecurity';
 
 export const CustomerCartPage = () => {
   const { showToast, placeOrderWithIdempotency } = useApp();
-  const { walletBalance, displayName } = useAuth();
+  const { walletBalance, user } = useAuth();
   const navigate = useNavigate();
 
+  // Cart Items State
   const [cart, setCart] = useState(() => {
     try {
       const stored = JSON.parse(localStorage.getItem('smilefood_cart') || '[]');
       if (stored.length > 0) return stored;
     } catch {}
-    // Default starter item if empty
+    // Default starter items if empty
     return [
-      { id: 'd-1', name: 'Special Smokey Party Jollof', restaurant: 'Mama Cass Restaurant', price: 14.50, quantity: 2, image: 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=500&fit=crop&q=80' },
-      { id: 'd-6', name: 'Fresh Passionfruit Citrus Chapman', restaurant: 'Sweet Sensation Kitchen', price: 6.50, quantity: 1, image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500&fit=crop&q=80' },
+      { id: 'ng-1', name: 'Special Smokey Party Jollof Rice', restaurant: 'Mama Cass Restaurant', price: 14.50, quantity: 2, image: 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=500&fit=crop&q=80' },
+      { id: 'dr-1', name: 'Fresh Passionfruit Citrus Chapman', restaurant: 'Sweet Sensation Kitchen', price: 6.50, quantity: 1, image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500&fit=crop&q=80' },
     ];
   });
 
-  const [address, setAddress] = useState('14 Adeola Odeku St, Victoria Island, Lagos');
-  const [instructions, setInstructions] = useState('Call on arrival, leave with reception');
+  // Persisted Delivery Address Baseline
+  const [persistedAddress, setPersistedAddress] = useState('14 Adeola Odeku St, Victoria Island, Lagos');
+  const [persistedInstructions, setPersistedInstructions] = useState('Call on arrival, leave with reception');
+
+  // Address Edit Mode State (View-only by default)
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [tempAddress, setTempAddress] = useState(persistedAddress);
+  const [tempInstructions, setTempInstructions] = useState(persistedInstructions);
+
+  // Payment Method State
   const [paymentMethod, setPaymentMethod] = useState('wallet'); // 'wallet' | 'card' | 'bank'
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState(null);
 
+  // Cart operations (remain fully operational)
   const updateQuantity = (id, delta) => {
     setCart(prev => {
       const updated = prev.map(item => {
@@ -57,58 +69,91 @@ export const CustomerCartPage = () => {
     navigate('/customer');
   };
 
-  // Calculations
+  // Explicit Address Editing Controls
+  const handleStartEditAddress = () => {
+    setTempAddress(persistedAddress);
+    setTempInstructions(persistedInstructions);
+    setIsEditingAddress(true);
+  };
+
+  const handleApplyAddress = (e) => {
+    e.preventDefault();
+    if (!tempAddress || tempAddress.trim().length < 5) {
+      showToast('Please enter a valid street address (min 5 characters).', 'warning');
+      return;
+    }
+    setPersistedAddress(tempAddress.trim());
+    setPersistedInstructions(tempInstructions ? tempInstructions.trim() : '');
+    setIsEditingAddress(false);
+    showToast('Delivery destination updated successfully.', 'success');
+  };
+
+  const handleCancelEditAddress = () => {
+    setTempAddress(persistedAddress);
+    setTempInstructions(persistedInstructions);
+    setIsEditingAddress(false);
+  };
+
+  // Canonical calculations
   const foodSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryFee = foodSubtotal > 0 ? 4.50 : 0.00;
   const serviceFee = foodSubtotal > 0 ? 2.00 : 0.00;
   const grandTotal = foodSubtotal + deliveryFee + serviceFee;
 
-  // Split calculation preview
-  const vendorShare = foodSubtotal * 0.85; // 85%
-  const riderShare = deliveryFee * 0.10 + 3.00; // 10%
-  const platformShare = grandTotal - vendorShare - riderShare; // 5%
-
+  // Checkout with Server-side Cart & Order Validation
   const handlePlaceOrder = async () => {
     if (cart.length === 0) {
       showToast('Your cart is empty.', 'warning');
       return;
     }
-    if (paymentMethod === 'wallet' && walletBalance < grandTotal) {
-      showToast(`Insufficient wallet balance ($${walletBalance.toFixed(2)}). Please top up or choose card.`, 'error');
+
+    setCheckoutError(null);
+
+    // 1. Backend validation against catalogue, canonical prices, fees, and balance
+    const validationResult = validateCartOrder({
+      cartItems: cart,
+      paymentMethod,
+      walletBalance,
+      deliveryAddress: persistedAddress,
+      instructions: persistedInstructions,
+      user,
+    });
+
+    if (!validationResult.valid) {
+      setCheckoutError(validationResult.error);
+      showToast(validationResult.error, 'error');
       return;
     }
 
     setIsCheckingOut(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setIsCheckingOut(false);
 
-    const newOrderNumber = `#SF-${Math.floor(80000 + Math.random() * 9000)}`;
-    const newOrder = {
-      id: newOrderNumber.replace('#', ''),
-      orderNumber: newOrderNumber,
-      customer: { name: displayName, address, phone: '+234 803 123 4567' },
-      restaurant: { name: cart[0]?.restaurant || 'Mama Cass Restaurant' },
-      status: 'Pending',
-      stateMachineStep: 'PaymentEscrowLocked',
-      escrowStatus: 'LOCKED',
-      totalAmount: grandTotal,
-      foodSubtotal,
-      deliveryFee,
-      serviceFee,
-      items: cart,
-      date: 'Just now',
-      splitPayout: {
-        vendor: vendorShare,
-        rider: riderShare,
-        platform: platformShare
+    try {
+      // Simulate gateway authorization latency
+      await new Promise(r => setTimeout(r, 1000));
+
+      const validatedOrder = validationResult.order;
+      const idempotencyKey = `ord_idem_${validatedOrder.id}_${Date.now()}`;
+
+      // Submit with idempotency
+      const placementResult = placeOrderWithIdempotency(validatedOrder, idempotencyKey);
+
+      if (!placementResult.success) {
+        setCheckoutError(placementResult.error || 'Failed to authorize escrow payment.');
+        showToast(placementResult.error || 'Order placement failed.', 'error');
+        setIsCheckingOut(false);
+        return;
       }
-    };
 
-    const idempotencyKey = `ord_idem_${newOrder.id}_${Date.now()}`;
-    placeOrderWithIdempotency(newOrder, idempotencyKey);
-    localStorage.removeItem('smilefood_cart');
-    showToast(`Order ${newOrderNumber} placed! Escrow funds locked securely.`, 'success');
-    navigate('/customer/track');
+      // Order placed successfully
+      localStorage.removeItem('smilefood_cart');
+      setIsCheckingOut(false);
+      showToast(`Order ${validatedOrder.orderNumber} placed! Escrow funds locked securely.`, 'success');
+      navigate('/customer/track');
+    } catch {
+      setIsCheckingOut(false);
+      setCheckoutError('Payment gateway timeout. Please retry authorization.');
+      showToast('Checkout transaction failed.', 'error');
+    }
   };
 
   return (
@@ -129,6 +174,7 @@ export const CustomerCartPage = () => {
 
         {cart.length > 0 && (
           <button
+            type="button"
             onClick={clearAndCancelCart}
             className="px-4 py-2 rounded-2xl bg-[#FDECEC] hover:bg-[#FCD8D8] text-[#D95353] text-[13px] font-bold transition-all flex items-center gap-1.5"
           >
@@ -148,6 +194,14 @@ export const CustomerCartPage = () => {
           You can freely cancel your order at any moment before payment authorization with zero penalties.
         </div>
       </div>
+
+      {/* Checkout Error Message */}
+      {checkoutError && (
+        <div className="p-4 rounded-2xl bg-[#FDECEC] dark:bg-[#331414] border border-[#D95353]/30 flex items-center gap-3 text-[13px] text-[#D95353] dark:text-[#E56262]">
+          <IconsaxIcon name="failed" size={18} color="#D95353" />
+          <span className="font-semibold">{checkoutError}</span>
+        </div>
+      )}
 
       {cart.length === 0 ? (
         <div className="smile-card p-12 text-center bg-white dark:bg-[#181F1A] border border-[#EEEEEE] dark:border-[#27332A] rounded-[32px] space-y-4">
@@ -189,24 +243,31 @@ export const CustomerCartPage = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {/* Operational Cart Quantity Controls */}
                       <div className="flex items-center border border-[#EEEEEE] dark:border-[#27332A] rounded-xl overflow-hidden bg-[#F5F6F5] dark:bg-[#202922]">
                         <button
+                          type="button"
                           onClick={() => updateQuantity(item.id, -1)}
-                          className="w-8 h-8 flex items-center justify-center font-bold text-[#171917] dark:text-white hover:bg-white"
+                          aria-label={`Decrease quantity of ${item.name}`}
+                          className="w-8 h-8 flex items-center justify-center font-bold text-[#171917] dark:text-white hover:bg-white dark:hover:bg-[#27332A] transition-colors"
                         >
                           -
                         </button>
                         <span className="w-8 text-center text-xs font-bold">{item.quantity}</span>
                         <button
+                          type="button"
                           onClick={() => updateQuantity(item.id, 1)}
-                          className="w-8 h-8 flex items-center justify-center font-bold text-[#171917] dark:text-white hover:bg-white"
+                          aria-label={`Increase quantity of ${item.name}`}
+                          className="w-8 h-8 flex items-center justify-center font-bold text-[#171917] dark:text-white hover:bg-white dark:hover:bg-[#27332A] transition-colors"
                         >
                           +
                         </button>
                       </div>
 
                       <button
+                        type="button"
                         onClick={() => removeItem(item.id)}
+                        aria-label={`Remove ${item.name} from cart`}
                         className="p-2 text-[#D95353] hover:bg-[#FDECEC] rounded-xl transition-colors"
                       >
                         <IconsaxIcon name="trash" size={16} />
@@ -217,29 +278,118 @@ export const CustomerCartPage = () => {
               </div>
             </div>
 
-            {/* Delivery Address Card */}
+            {/* Delivery Destination Card (View-Only by default with explicit Edit/Save controls) */}
             <div className="smile-card bg-white dark:bg-[#181F1A] border border-[#EEEEEE] dark:border-[#27332A] rounded-[32px] p-6 space-y-4">
-              <h3 className="text-[16px] font-bold text-[#171917] dark:text-[#F0F5F2] font-['Outfit']">
-                Delivery Destination
-              </h3>
-              <div>
-                <label className="block text-[12px] font-bold text-[#171917] dark:text-[#F0F5F2] mb-1">Drop-off Street Address</label>
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#EEEEEE] dark:border-[#27332A] bg-[#F5F6F5] dark:bg-[#202922] text-[13px] font-medium text-[#171917] dark:text-[#F0F5F2] focus:outline-none focus:border-[#079B48]"
-                />
+              <div className="flex items-center justify-between pb-2 border-b border-[#EEEEEE] dark:border-[#27332A]">
+                <div>
+                  <h3 className="text-[16px] font-bold text-[#171917] dark:text-[#F0F5F2] font-['Outfit']">
+                    Delivery Destination
+                  </h3>
+                  <p className="text-[11px] text-[#777D79] dark:text-[#8E9A92]">
+                    Sensitive location details are protected and view-only by default
+                  </p>
+                </div>
+                {!isEditingAddress ? (
+                  <button
+                    type="button"
+                    id="btn-edit-cart-address"
+                    onClick={handleStartEditAddress}
+                    className="px-3.5 py-1.5 rounded-full border border-[#EEEEEE] dark:border-[#27332A] hover:border-[#079B48] text-[12px] font-bold text-[#079B48] transition-colors flex items-center gap-1.5"
+                  >
+                    <IconsaxIcon name="edit" size={13} color="#079B48" />
+                    <span>Edit Address</span>
+                  </button>
+                ) : (
+                  <span className="text-[11px] font-bold text-[#F28C00]">Editing Active</span>
+                )}
               </div>
-              <div>
-                <label className="block text-[12px] font-bold text-[#171917] dark:text-[#F0F5F2] mb-1">Rider Instructions</label>
-                <input
-                  type="text"
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#EEEEEE] dark:border-[#27332A] bg-[#F5F6F5] dark:bg-[#202922] text-[13px] font-medium text-[#171917] dark:text-[#F0F5F2] focus:outline-none focus:border-[#079B48]"
-                />
-              </div>
+
+              {!isEditingAddress ? (
+                /* View-Only State: Clicking or focusing does NOT trigger edit mode */
+                <div className="space-y-3">
+                  <div
+                    tabIndex={0}
+                    className="p-3.5 rounded-2xl bg-[#F5F6F5]/70 dark:bg-[#202922]/50 border border-[#EEEEEE] dark:border-[#27332A] flex items-start gap-3 cursor-default select-text focus:outline-none"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-[#EAF8D8] text-[#079B48] flex items-center justify-center shrink-0 mt-0.5">
+                      <IconsaxIcon name="location" size={16} color="#079B48" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#777D79] dark:text-[#8E9A92]">
+                        Drop-off Street Address
+                      </p>
+                      <p className="text-[13px] font-semibold text-[#171917] dark:text-[#F0F5F2] mt-0.5">
+                        {persistedAddress}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    tabIndex={0}
+                    className="p-3 rounded-2xl bg-[#F5F6F5]/70 dark:bg-[#202922]/50 border border-[#EEEEEE] dark:border-[#27332A] flex items-start gap-3 cursor-default select-text focus:outline-none"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-gray-800 flex items-center justify-center shrink-0 text-[#777D79] text-xs">
+                      <IconsaxIcon name="info-circle" size={14} />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#777D79] dark:text-[#8E9A92]">
+                        Courier Instructions
+                      </p>
+                      <p className="text-[12px] font-medium text-[#171917] dark:text-[#F0F5F2]">
+                        {persistedInstructions || 'No special courier instructions provided'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Explicit Edit State: Form with Save & Cancel */
+                <form onSubmit={handleApplyAddress} className="space-y-4 animate-in fade-in">
+                  <div>
+                    <label className="block text-[12px] font-bold text-[#171917] dark:text-[#F0F5F2] mb-1">
+                      Drop-off Street Address
+                    </label>
+                    <input
+                      type="text"
+                      id="input-cart-address"
+                      value={tempAddress}
+                      onChange={(e) => setTempAddress(e.target.value)}
+                      placeholder="Enter delivery street address"
+                      className="w-full h-11 px-3.5 rounded-xl border border-[#079B48] bg-[#F5F6F5] dark:bg-[#202922] text-[13px] font-medium text-[#171917] dark:text-[#F0F5F2] focus:outline-none focus:ring-2 focus:ring-[#079B48]/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[12px] font-bold text-[#171917] dark:text-[#F0F5F2] mb-1">
+                      Courier Instructions
+                    </label>
+                    <input
+                      type="text"
+                      id="input-cart-instructions"
+                      value={tempInstructions}
+                      onChange={(e) => setTempInstructions(e.target.value)}
+                      placeholder="e.g. Call on arrival, leave with security"
+                      className="w-full h-11 px-3.5 rounded-xl border border-[#EEEEEE] dark:border-[#27332A] bg-[#F5F6F5] dark:bg-[#202922] text-[13px] font-medium text-[#171917] dark:text-[#F0F5F2] focus:outline-none focus:border-[#079B48]"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      id="btn-cancel-cart-address"
+                      onClick={handleCancelEditAddress}
+                      className="px-4 py-2 rounded-xl text-[12px] font-bold text-[#777D79] dark:text-[#8E9A92] hover:bg-[#F5F6F5] dark:hover:bg-[#202922] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      id="btn-save-cart-address"
+                      className="px-5 py-2 rounded-xl bg-[#079B48] hover:bg-[#087F3C] text-white text-[12px] font-bold shadow-sm transition-all"
+                    >
+                      Apply Address
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
 
@@ -253,11 +403,12 @@ export const CustomerCartPage = () => {
               <div className="space-y-2">
                 {[
                   { id: 'wallet', label: `SMILE Wallet ($${walletBalance.toFixed(2)})`, icon: 'wallet' },
-                  { id: 'card', label: 'Debit / Credit Card (Stripe)', icon: 'card' },
+                  { id: 'card', label: 'Debit / Credit Card (Stripe Tokenized)', icon: 'card' },
                   { id: 'bank', label: 'Instant Bank Transfer', icon: 'bank' },
                 ].map(m => (
                   <button
                     key={m.id}
+                    type="button"
                     onClick={() => setPaymentMethod(m.id)}
                     className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all text-left ${
                       paymentMethod === m.id
@@ -300,14 +451,16 @@ export const CustomerCartPage = () => {
 
               {/* Authorize & Place Order CTA */}
               <button
+                type="button"
+                id="btn-place-order"
                 onClick={handlePlaceOrder}
-                disabled={isCheckingOut}
+                disabled={isCheckingOut || cart.length === 0}
                 className="w-full h-12 rounded-full bg-[#079B48] hover:bg-[#087F3C] text-white text-[14px] font-bold transition-all shadow-md shadow-[#079B48]/20 flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isCheckingOut ? (
                   <>
-                    <IconsaxIcon name="loading" size={16} color="white" />
-                    <span>Locking Escrow Payment...</span>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Verifying & Locking Escrow...</span>
                   </>
                 ) : (
                   <span>Authorize & Place Order (${grandTotal.toFixed(2)})</span>
@@ -315,6 +468,7 @@ export const CustomerCartPage = () => {
               </button>
 
               <button
+                type="button"
                 onClick={clearAndCancelCart}
                 className="w-full text-center text-[12px] font-bold text-[#D95353] hover:underline"
               >

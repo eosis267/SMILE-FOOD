@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
  */
 export const AdminSidebar = () => {
   const { darkMode, toggleDarkMode } = useApp();
-  const { displayName, signOut } = useAuth();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
 
   const navLinks = [
@@ -127,7 +127,7 @@ export const AdminSidebar = () => {
  */
 export const CustomerSidebar = () => {
   const { darkMode, toggleDarkMode } = useApp();
-  const { displayName, signOut } = useAuth();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
 
   const navLinks = [

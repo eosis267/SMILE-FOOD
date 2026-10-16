@@ -75,6 +75,38 @@ create policy "Users can update own profile"
   on public.profiles for update
   using (auth.uid() = id);
 
+-- Prevent unauthorized privilege escalation or wallet balance tampering
+create or replace function public.check_profile_mass_assignment()
+returns trigger as $$
+declare
+  v_is_admin boolean;
+begin
+  if current_setting('request.jwt.claim.role', true) = 'service_role' then
+    return new;
+  end if;
+
+  select (role = 'admin') into v_is_admin from public.profiles where id = auth.uid();
+  if not coalesce(v_is_admin, false) then
+    if new.role is distinct from old.role then
+      raise exception 'Security Violation: Modifying user role is not permitted.';
+    end if;
+    if new.wallet_balance is distinct from old.wallet_balance then
+      raise exception 'Security Violation: Modifying wallet balance directly is forbidden.';
+    end if;
+    if new.id is distinct from old.id then
+      raise exception 'Security Violation: Profile ID is immutable.';
+    end if;
+  end if;
+  new.updated_at := now();
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists trg_check_profile_mass_assignment on public.profiles;
+create trigger trg_check_profile_mass_assignment
+  before update on public.profiles
+  for each row execute function public.check_profile_mass_assignment();
+
 -- ----------------------------------------------------------------------------
 -- 3. ORDERS TABLE
 -- ----------------------------------------------------------------------------

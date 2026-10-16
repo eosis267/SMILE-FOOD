@@ -41,8 +41,6 @@ export const CustomerTrackingPage = () => {
     setCurrentStepIdx(0);
   };
 
-  const currentStep = STATUS_STEPS[currentStepIdx];
-
   return (
     <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-200">
       {/* Header */}

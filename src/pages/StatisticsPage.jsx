@@ -18,7 +18,6 @@ import { HOURLY_ORDER_TREND, REGIONAL_STATISTICS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 
 export const StatisticsPage = () => {
-  const { kpis, orders } = useApp();
   const [metricView, setMetricView] = useState('revenue'); // 'revenue' or 'orders'
 
   const revenueBreakdown = [

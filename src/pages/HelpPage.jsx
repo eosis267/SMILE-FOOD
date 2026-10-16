@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import IconsaxIcon from '../components/IconsaxIcon';
 import BackButton from '../components/BackButton';
 import { FAQS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
