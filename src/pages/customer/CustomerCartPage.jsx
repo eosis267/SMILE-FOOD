@@ -230,14 +230,14 @@ export const CustomerCartPage = () => {
 
               <div className="divide-y divide-[#EEEEEE] dark:divide-[#27332A]">
                 {cart.map(item => (
-                  <div key={item.id} className="py-4 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
+                  <div key={item.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                     <div className="flex items-center gap-3">
                       <img src={item.image} alt={item.name} className="w-14 h-14 rounded-2xl object-cover bg-gray-100" />
                       <div>
                         <h4 className="font-bold text-[14px] text-[#171917] dark:text-[#F0F5F2]">{item.name}</h4>
                         <p className="text-[12px] text-[#777D79]">{item.restaurant}</p>
                         <p className="text-[13px] font-extrabold text-[#079B48] font-['Outfit'] mt-0.5">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ₦{(item.price * item.quantity).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
                         </p>
                       </div>
                     </div>
@@ -402,7 +402,7 @@ export const CustomerCartPage = () => {
 
               <div className="space-y-2">
                 {[
-                  { id: 'wallet', label: `SMILE Wallet ($${walletBalance.toFixed(2)})`, icon: 'wallet' },
+                  { id: 'wallet', label: `SMILE Wallet (₦${walletBalance.toLocaleString('en-NG', { minimumFractionDigits: 2 })})`, icon: 'wallet' },
                   { id: 'card', label: 'Debit / Credit Card (Stripe Tokenized)', icon: 'card' },
                   { id: 'bank', label: 'Instant Bank Transfer', icon: 'bank' },
                 ].map(m => (
@@ -433,19 +433,19 @@ export const CustomerCartPage = () => {
               <div className="space-y-2 pt-3 border-t border-[#EEEEEE] dark:border-[#27332A] text-[13px]">
                 <div className="flex justify-between text-[#777D79] dark:text-[#8E9A92]">
                   <span>Food Subtotal:</span>
-                  <span className="font-bold text-[#171917] dark:text-[#F0F5F2]">${foodSubtotal.toFixed(2)}</span>
+                  <span className="font-bold text-[#171917] dark:text-[#F0F5F2]">₦{foodSubtotal.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-[#777D79] dark:text-[#8E9A92]">
                   <span>Delivery Fee:</span>
-                  <span className="font-bold text-[#171917] dark:text-[#F0F5F2]">${deliveryFee.toFixed(2)}</span>
+                  <span className="font-bold text-[#171917] dark:text-[#F0F5F2]">₦{deliveryFee.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-[#777D79] dark:text-[#8E9A92]">
                   <span>Service & Escrow Fee:</span>
-                  <span className="font-bold text-[#171917] dark:text-[#F0F5F2]">${serviceFee.toFixed(2)}</span>
+                  <span className="font-bold text-[#171917] dark:text-[#F0F5F2]">₦{serviceFee.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-[16px] font-extrabold text-[#171917] dark:text-[#F0F5F2] pt-2 border-t border-[#EEEEEE] dark:border-[#27332A]">
                   <span>Grand Total:</span>
-                  <span className="text-[#079B48] font-['Outfit'] text-[20px]">${grandTotal.toFixed(2)}</span>
+                  <span className="text-[#079B48] font-['Outfit'] text-[20px]">₦{grandTotal.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</span>
                 </div>
               </div>
 
@@ -463,7 +463,7 @@ export const CustomerCartPage = () => {
                     <span>Verifying & Locking Escrow...</span>
                   </>
                 ) : (
-                  <span>Authorize & Place Order (${grandTotal.toFixed(2)})</span>
+                  <span>Authorize & Place Order (₦{grandTotal.toLocaleString('en-NG', { minimumFractionDigits: 2 })})</span>
                 )}
               </button>
 

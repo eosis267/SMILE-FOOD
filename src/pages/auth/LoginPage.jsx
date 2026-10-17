@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import IconsaxIcon from '../../components/IconsaxIcon';
 
 const LoginPage = () => {
-  const { signIn, signInWithGoogle, demoSignIn, authError, setAuthError, loading } = useAuth();
+  const { signIn, signInWithGoogle, authError, setAuthError, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,13 +33,6 @@ const LoginPage = () => {
     } else {
       setLocalError(result.error || 'Sign in failed. Please try again.');
     }
-  };
-
-  const handleDemoLogin = (role) => {
-    setIsSubmitting(true);
-    const result = demoSignIn(role);
-    setIsSubmitting(false);
-    if (result.success) navigate('/', { replace: true });
   };
 
   const handleGoogle = async () => {
@@ -157,47 +150,6 @@ const LoginPage = () => {
               ) : 'Sign In'}
             </button>
           </form>
-
-          {/* Role-Specific Verified Demo Credentials */}
-          <div className="mt-6 pt-5 border-t border-[#EEEEEE] dark:border-[#27332A]">
-            <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#777D79] dark:text-[#8E9A92] mb-2.5 text-center">
-              Quick Verified Demo Accounts (RBAC)
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('admin')}
-                className="h-[38px] px-2.5 rounded-xl bg-[#EAF8D8] dark:bg-[#14301C] text-[#079B48] dark:text-[#D5F28A] text-[12px] font-bold flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                <IconsaxIcon name="security-safe" size={15} color="#079B48" />
-                <span>Admin</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('customer')}
-                className="h-[38px] px-2.5 rounded-xl bg-[#EAF8D8] dark:bg-[#14301C] text-[#079B48] dark:text-[#D5F28A] text-[12px] font-bold flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                <IconsaxIcon name="user" size={15} color="#079B48" />
-                <span>Customer</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('vendor')}
-                className="h-[38px] px-2.5 rounded-xl bg-[#FEF5E7] dark:bg-[#2A1F0A] text-[#F28C00] dark:text-[#FFEAAA] text-[12px] font-bold flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                <IconsaxIcon name="shop" size={15} color="#F28C00" />
-                <span>Vendor</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('rider')}
-                className="h-[38px] px-2.5 rounded-xl bg-[#F0F8FF] dark:bg-[#102231] text-[#087F3C] dark:text-[#7CD5A9] text-[12px] font-bold flex items-center justify-center gap-1.5 hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                <IconsaxIcon name="scooter" size={15} color="#087F3C" />
-                <span>Rider</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}

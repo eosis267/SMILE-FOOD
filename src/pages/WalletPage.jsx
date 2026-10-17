@@ -3,17 +3,7 @@ import IconsaxIcon from '../components/IconsaxIcon';
 import BackButton from '../components/BackButton';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-
-const WALLET_TRANSACTIONS = [
-  { id: 'wt-001', type: 'credit', description: 'Escrow release — Order #SF-84201', amount: 42.50, date: '2026-10-12 14:32', ref: 'ESC-84201', balance: 1500.00 },
-  { id: 'wt-002', type: 'credit', description: 'Escrow release — Order #SF-84156', amount: 35.00, date: '2026-10-12 11:15', ref: 'ESC-84156', balance: 1457.50 },
-  { id: 'wt-003', type: 'debit', description: 'Withdrawal to bank — GTB ****4521', amount: 200.00, date: '2026-10-11 18:00', ref: 'WDR-20241011', balance: 1422.50 },
-  { id: 'wt-004', type: 'credit', description: 'Top-up via Stripe Card', amount: 500.00, date: '2026-10-11 09:30', ref: 'TPU-STRIPE-0011', balance: 1622.50 },
-  { id: 'wt-005', type: 'credit', description: 'Escrow release — Order #SF-83990', amount: 28.75, date: '2026-10-10 20:15', ref: 'ESC-83990', balance: 1122.50 },
-  { id: 'wt-006', type: 'debit', description: 'Platform commission deduction', amount: 6.80, date: '2026-10-10 20:15', ref: 'COM-83990', balance: 1093.75 },
-  { id: 'wt-007', type: 'credit', description: 'Referral bonus — MIKE-50', amount: 50.00, date: '2026-10-09 12:00', ref: 'REF-MIKE50', balance: 1100.55 },
-  { id: 'wt-008', type: 'debit', description: 'Withdrawal to bank — GTB ****4521', amount: 100.00, date: '2026-10-08 15:30', ref: 'WDR-20241008', balance: 1050.55 },
-];
+import { downloadWalletReceipt } from '../lib/receiptGenerator';
 
 const TOP_UP_AMOUNTS = [500, 1000, 2500, 5000];
 const PAYMENT_METHODS = [
@@ -23,8 +13,8 @@ const PAYMENT_METHODS = [
 ];
 
 const WalletPage = () => {
-  const { showToast } = useApp();
-  const { walletBalance, displayName } = useAuth();
+  const { showToast, transactions = [], addTransaction } = useApp();
+  const { user, walletBalance, displayName } = useAuth();
 
   const [showTopUp, setShowTopUp] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState('');
@@ -34,10 +24,15 @@ const WalletPage = () => {
   const [txFilter, setTxFilter] = useState('all'); // 'all' | 'credit' | 'debit'
 
   const balance = walletBalance || 1500.00;
-  const totalEarned = WALLET_TRANSACTIONS.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0);
-  const totalWithdrawn = WALLET_TRANSACTIONS.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0);
+  const totalEarned = transactions.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0);
+  const totalWithdrawn = transactions.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0);
 
-  const filteredTx = WALLET_TRANSACTIONS.filter(t => txFilter === 'all' || t.type === txFilter);
+  const filteredTx = transactions.filter(t => txFilter === 'all' || t.type === txFilter);
+
+  const handleDownloadReceipt = (tx) => {
+    downloadWalletReceipt(tx, user);
+    showToast(`Downloaded receipt for ${tx.ref}!`, 'success');
+  };
 
   const handleTopUp = async () => {
     const amount = parseFloat(customAmount || topUpAmount);
@@ -46,16 +41,31 @@ const WalletPage = () => {
       return;
     }
     if (amount < 100) {
-      showToast('Minimum top-up amount is $100.', 'warning');
+      showToast('Minimum top-up amount is ₦100.', 'warning');
       return;
     }
 
     setIsProcessing(true);
     // Simulate payment gateway processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 1500));
     setIsProcessing(false);
 
-    showToast(`Successfully topped up $${amount.toFixed(2)} via ${PAYMENT_METHODS.find(m => m.id === paymentMethod)?.label}!`, 'success');
+    const methodLabel = PAYMENT_METHODS.find(m => m.id === paymentMethod)?.label || 'Card';
+    const newTx = {
+      id: `wt-${Date.now()}`,
+      type: 'credit',
+      description: `Top-up via ${methodLabel}`,
+      amount,
+      date: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      ref: `TPU-${Math.floor(100000 + Math.random() * 900000)}`,
+      balance: balance + amount,
+    };
+
+    if (addTransaction) {
+      addTransaction(newTx);
+    }
+
+    showToast(`Successfully topped up ₦${amount.toLocaleString('en-NG', { minimumFractionDigits: 2 })} via ${methodLabel}!`, 'success');
     setShowTopUp(false);
     setTopUpAmount('');
     setCustomAmount('');
@@ -104,10 +114,10 @@ const WalletPage = () => {
             </div>
 
             <div className="text-[40px] font-extrabold font-['Outfit'] leading-none mb-1">
-              ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ₦{balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-[12px] text-white/70">
-              Hello, {displayName} · USD Wallet
+              Hello, {displayName} · NGN (Naira) Wallet
             </p>
 
             <div className="mt-6 flex gap-3">
@@ -138,7 +148,7 @@ const WalletPage = () => {
             </div>
           </div>
           <div className="text-[32px] font-extrabold text-[#171917] dark:text-[#F0F5F2] font-['Outfit']">
-            ${totalEarned.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            ₦{totalEarned.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
           </div>
           <p className="text-[12px] font-medium text-[#777D79] dark:text-[#8E9A92] mt-2">
             Escrow releases + bonuses
@@ -154,7 +164,7 @@ const WalletPage = () => {
             </div>
           </div>
           <div className="text-[32px] font-extrabold text-[#171917] dark:text-[#F0F5F2] font-['Outfit']">
-            ${totalWithdrawn.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            ₦{totalWithdrawn.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
           </div>
           <p className="text-[12px] font-medium text-[#777D79] dark:text-[#8E9A92] mt-2">
             Bank transfers + deductions
@@ -199,6 +209,7 @@ const WalletPage = () => {
                 <th className="py-3 px-3 font-bold uppercase tracking-wider text-[11px]">REF</th>
                 <th className="py-3 px-3 font-bold uppercase tracking-wider text-[11px] text-right">AMOUNT</th>
                 <th className="py-3 px-3 font-bold uppercase tracking-wider text-[11px] text-right">BALANCE</th>
+                <th className="py-3 px-3 font-bold uppercase tracking-wider text-[11px] text-center">RECEIPT</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EEEEEE]/70 dark:divide-[#27332A]/70">
@@ -230,11 +241,22 @@ const WalletPage = () => {
                     <span className={`font-extrabold text-[14px] font-['Outfit'] ${
                       tx.type === 'credit' ? 'text-[#149B57]' : 'text-[#D95353]'
                     }`}>
-                      {tx.type === 'credit' ? '+' : '-'}${tx.amount.toFixed(2)}
+                      {tx.type === 'credit' ? '+' : '-'}₦{tx.amount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
                     </span>
                   </td>
                   <td className="py-4 px-3 text-right font-bold text-[#171917] dark:text-[#F0F5F2] font-['Outfit'] text-[13px]">
-                    ${tx.balance.toFixed(2)}
+                    ₦{tx.balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-4 px-3 text-center">
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadReceipt(tx)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#EAF8D8] hover:bg-[#D5F28A] dark:bg-[#14301C] dark:hover:bg-[#1f4a2b] text-[#079B48] dark:text-[#D5F28A] text-[12px] font-bold transition-all shadow-sm active:scale-95"
+                      title="Download PDF Receipt"
+                    >
+                      <IconsaxIcon name="receipt" size={14} color="#079B48" />
+                      <span>Receipt</span>
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -289,7 +311,7 @@ const WalletPage = () => {
                       : 'bg-[#F5F6F5] dark:bg-[#202922] text-[#171917] dark:text-[#F0F5F2] hover:bg-[#EAF8D8] dark:hover:bg-[#14301C] hover:text-[#079B48]'
                   }`}
                 >
-                  ${amt}
+                  ₦{amt}
                 </button>
               ))}
             </div>
@@ -300,13 +322,13 @@ const WalletPage = () => {
                 Custom Amount
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[16px] font-bold text-[#777D79]">$</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[16px] font-bold text-[#777D79]">₦</span>
                 <input
                   type="number"
                   min="100"
                   value={customAmount}
                   onChange={(e) => { setCustomAmount(e.target.value); setTopUpAmount(''); }}
-                  placeholder="Enter amount (min. $100)"
+                  placeholder="Enter amount (min. ₦100)"
                   className="w-full h-[52px] pl-8 pr-4 rounded-[12px] border border-[#EEEEEE] bg-[#F5F6F5] text-[14px] font-bold text-[#171917] placeholder-[#AAAAAA] focus:outline-none focus:border-[#079B48] focus:bg-white focus:ring-2 focus:ring-[#079B48]/12 transition-all dark:bg-[#202922] dark:border-[#27332A] dark:text-[#F0F5F2]"
                 />
               </div>
@@ -345,7 +367,7 @@ const WalletPage = () => {
               <div className="p-4 rounded-2xl bg-[#EAF8D8] dark:bg-[#14301C] mb-4 flex items-center justify-between">
                 <span className="text-[13px] font-semibold text-[#014C32] dark:text-[#D5F28A]">You'll add to wallet:</span>
                 <span className="text-[20px] font-extrabold text-[#014C32] dark:text-[#D5F28A] font-['Outfit']">
-                  ${parseFloat(customAmount || topUpAmount || 0).toFixed(2)}
+                  ₦{parseFloat(customAmount || topUpAmount || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
                 </span>
               </div>
             )}
@@ -361,7 +383,7 @@ const WalletPage = () => {
                   Processing payment...
                 </>
               ) : (
-                `Pay Now${topUpAmount || customAmount ? ` — $${parseFloat(customAmount || topUpAmount).toFixed(2)}` : ''}`
+                `Pay Now${topUpAmount || customAmount ? ` — ₦${parseFloat(customAmount || topUpAmount).toLocaleString('en-NG', { minimumFractionDigits: 2 })}` : ''}`
               )}
             </button>
           </div>

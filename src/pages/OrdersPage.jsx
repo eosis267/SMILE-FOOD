@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import IconsaxIcon from '../components/IconsaxIcon';
 import BackButton from '../components/BackButton';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { downloadOrderReceipt } from '../lib/receiptGenerator';
 
 export const OrdersPage = () => {
   const { 
@@ -10,6 +12,7 @@ export const OrdersPage = () => {
     createDemoOrder, 
     showToast 
   } = useApp();
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState('ALL');
   const [localSearch, setLocalSearch] = useState('');
@@ -209,7 +212,7 @@ export const OrdersPage = () => {
                     </td>
 
                     <td className="py-4 px-3 font-extrabold text-[#171917] dark:text-[#F0F5F2] font-['Outfit'] text-[14px]">
-                      ${order.totalAmount.toFixed(2)}
+                      ₦{order.totalAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
                     </td>
 
                     <td className="py-4 px-3">
@@ -225,12 +228,27 @@ export const OrdersPage = () => {
                     </td>
 
                     <td className="py-4 px-3 text-right">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }}
-                        className="px-3.5 py-1.5 rounded-xl bg-[#F5F6F5] dark:bg-[#202922] text-[#079B48] hover:bg-[#EAF8D8] dark:hover:bg-[#14301C] text-[12px] font-bold transition-all"
-                      >
-                        Details →
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            downloadOrderReceipt(order, user);
+                            showToast(`Downloaded receipt for ${order.orderNumber}!`, 'success');
+                          }}
+                          title="Download PDF Receipt"
+                          className="p-1.5 rounded-lg bg-[#EAF8D8] hover:bg-[#D5F28A] dark:bg-[#14301C] dark:hover:bg-[#1f4a2b] text-[#079B48] dark:text-[#D5F28A] transition-all active:scale-95 shadow-sm"
+                        >
+                          <IconsaxIcon name="receipt" size={14} color="#079B48" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }}
+                          className="px-3 py-1.5 rounded-xl bg-[#F5F6F5] dark:bg-[#202922] text-[#079B48] hover:bg-[#EAF8D8] dark:hover:bg-[#14301C] text-[12px] font-bold transition-all"
+                        >
+                          Details →
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

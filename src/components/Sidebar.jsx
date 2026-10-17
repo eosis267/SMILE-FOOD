@@ -28,7 +28,7 @@ export const Sidebar = () => {
   };
 
   return (
-    <aside className="w-[240px] shrink-0 min-h-screen bg-[#FFFFFF] dark:bg-[#181F1A] border-r border-[#EEEEEE] dark:border-[#27332A] flex flex-col justify-between p-5 transition-colors select-none z-20">
+    <aside className="hidden lg:flex w-[240px] shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto bg-[#FFFFFF] dark:bg-[#181F1A] border-r border-[#EEEEEE] dark:border-[#27332A] flex-col justify-between p-5 transition-colors select-none z-20">
       <div>
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-2.5 px-2 py-3 mb-6 group">

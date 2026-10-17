@@ -3,7 +3,8 @@ import {
   INITIAL_KPIS, 
   REGIONAL_STATISTICS, 
   INITIAL_ORDERS, 
-  INITIAL_NOTIFICATIONS 
+  INITIAL_NOTIFICATIONS,
+  INITIAL_WALLET_TRANSACTIONS 
 } from '../data/mockData';
 import { 
   VALID_TRANSITIONS, 
@@ -91,6 +92,19 @@ export const AppProvider = ({ children }) => {
     const paymentLedger = createLedgerEntry(newOrder, 'PAYMENT_VERIFIED');
     setLedgerEntries(prev => [...paymentLedger, ...prev]);
     setOrders(prev => [newOrder, ...prev]);
+
+    const orderNum = newOrder.orderNumber || newOrder.id;
+    const cleanRef = `ORD-${String(orderNum).replace(/[^a-zA-Z0-9]/g, '')}`;
+    const orderTx = {
+      id: `wt-ord-${newOrder.id || Date.now()}`,
+      type: 'debit',
+      description: `Meal Order ${orderNum} — ${newOrder.restaurant?.name || newOrder.restaurant || 'Restaurant'}`,
+      amount: Number(newOrder.totalAmount || newOrder.total || 35.00),
+      date: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      ref: cleanRef,
+      balance: Math.max(0, 1500 - Number(newOrder.totalAmount || newOrder.total || 35.00))
+    };
+    addTransaction(orderTx);
     return { success: true };
   };
 
@@ -124,6 +138,38 @@ export const AppProvider = ({ children }) => {
     });
   }, [ledgerEntries]);
 
+  // 4.B. Live Synchronized Transactions Ledger Across All Users & Tabs
+  const [transactions, setTransactions] = useState(() => {
+    try {
+      const saved = localStorage.getItem('smilefood_wallet_txs');
+      return saved ? JSON.parse(saved) : INITIAL_WALLET_TRANSACTIONS;
+    } catch {
+      return INITIAL_WALLET_TRANSACTIONS;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('smilefood_wallet_txs', JSON.stringify(transactions));
+      postBroadcast({
+        type: 'TRANSACTIONS_SYNC',
+        payload: { transactions }
+      });
+    } catch {}
+  }, [transactions]);
+
+  const addTransaction = (newTx) => {
+    setTransactions(prev => {
+      const exists = prev.some(t => t.id === newTx.id || (t.ref && t.ref === newTx.ref));
+      if (exists) return prev;
+      const updated = [newTx, ...prev];
+      postBroadcast({
+        type: 'TRANSACTIONS_SYNC',
+        payload: { transactions: updated }
+      });
+      return updated;
+    });
+  };
 
   // ─── Real-Time Cross-Tab & Backend Channel Setup ────────────────────────────
   useEffect(() => {
@@ -136,6 +182,10 @@ export const AppProvider = ({ children }) => {
         if (type === 'ORDERS_SYNC' && payload) {
           setOrders(payload.orders);
           if (payload.ledger) setLedgerEntries(payload.ledger);
+        } else if (type === 'TRANSACTIONS_SYNC' && payload?.transactions) {
+          setTransactions(payload.transactions);
+        } else if (type === 'LEDGER_SYNC' && payload?.ledger) {
+          setLedgerEntries(payload.ledger);
         } else if (type === 'THEME_SYNC' && typeof event.data.darkMode === 'boolean') {
           setDarkMode(event.data.darkMode);
         }
@@ -146,6 +196,12 @@ export const AppProvider = ({ children }) => {
     const handleStorage = (e) => {
       if (e.key === 'smilefood_orders' && e.newValue) {
         try { setOrders(JSON.parse(e.newValue)); } catch {}
+      }
+      if (e.key === 'smilefood_wallet_txs' && e.newValue) {
+        try { setTransactions(JSON.parse(e.newValue)); } catch {}
+      }
+      if (e.key === 'smilefood_ledger' && e.newValue) {
+        try { setLedgerEntries(JSON.parse(e.newValue)); } catch {}
       }
       if (e.key === 'smilefood_dark_mode' && e.newValue) {
         try { setDarkMode(JSON.parse(e.newValue)); } catch {}
@@ -193,6 +249,7 @@ export const AppProvider = ({ children }) => {
   // 6. Selected Order & Modal Controls
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isLedgerModalOpen, setIsLedgerModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
   const showToast = (message, type = 'success') => {
@@ -234,11 +291,31 @@ export const AppProvider = ({ children }) => {
           updatedStatus = 'Completed';
           updatedEscrow = 'RELEASED';
           newEntries = createLedgerEntry(order, 'DELIVERED');
+          const releaseTx = {
+            id: `wt-esc-${order.id}-${Date.now()}`,
+            type: 'credit',
+            description: `Escrow release payout — Order ${order.orderNumber}`,
+            amount: Number(order.totalAmount || 35.00),
+            date: new Date().toISOString().replace('T', ' ').slice(0, 16),
+            ref: `ESC-${String(order.orderNumber).replace(/[^a-zA-Z0-9]/g, '')}`,
+            balance: 1500.00 + Number(order.totalAmount || 35.00)
+          };
+          addTransaction(releaseTx);
           showToast(`Order ${order.orderNumber} delivered! Escrow split released to vendor & rider.`, 'success');
         } else if (targetState === 'Cancelled') {
           updatedStatus = 'Failed';
           updatedEscrow = 'REFUNDED';
           newEntries = createLedgerEntry(order, 'CANCELLED');
+          const refundTx = {
+            id: `wt-ref-${order.id}-${Date.now()}`,
+            type: 'credit',
+            description: `Escrow refund — Order ${order.orderNumber} cancelled`,
+            amount: Number(order.totalAmount || 35.00),
+            date: new Date().toISOString().replace('T', ' ').slice(0, 16),
+            ref: `REF-${String(order.orderNumber).replace(/[^a-zA-Z0-9]/g, '')}`,
+            balance: 1500.00 + Number(order.totalAmount || 35.00)
+          };
+          addTransaction(refundTx);
           showToast(`Order ${order.orderNumber} cancelled (${cancelReason || 'Operational reason'}). Escrow refunded.`, 'warning');
         } else {
           showToast(`Order ${order.orderNumber} progressed to ${targetState}`, 'success');
@@ -354,6 +431,8 @@ export const AppProvider = ({ children }) => {
         setSelectedOrder,
         isLedgerModalOpen,
         setIsLedgerModalOpen,
+        mobileMenuOpen,
+        setMobileMenuOpen,
         notifications,
         unreadCount,
         markNotificationAsRead,
@@ -365,6 +444,9 @@ export const AppProvider = ({ children }) => {
         toastMessage,
         showToast,
         placeOrderWithIdempotency,
+        transactions,
+        setTransactions,
+        addTransaction,
       }}
     >
       {children}

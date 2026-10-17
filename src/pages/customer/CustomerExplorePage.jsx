@@ -148,7 +148,7 @@ export const CustomerExplorePage = () => {
             {/* Bottom Row */}
             <div className="p-5 pt-0 flex items-center justify-between border-t border-[#EEEEEE]/60 dark:border-[#27332A]/60 mt-2">
               <div className="text-[20px] font-extrabold text-[#171917] dark:text-[#F0F5F2] font-['Outfit']">
-                ${dish.price.toFixed(2)}
+                ₦{dish.price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
               </div>
               <button
                 onClick={() => addToCart(dish)}

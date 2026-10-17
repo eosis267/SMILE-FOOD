@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import IconsaxIcon from './IconsaxIcon';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { VALID_TRANSITIONS } from '../data/ledgerService';
 import { maskPhoneNumber } from '../lib/apiSecurity';
+import { downloadOrderReceipt } from '../lib/receiptGenerator';
 
 export const OrderDetailModal = () => {
   const { 
@@ -11,6 +13,7 @@ export const OrderDetailModal = () => {
     advanceOrderState, 
     showToast 
   } = useApp();
+  const { user } = useAuth();
 
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('Customer changed delivery address');
@@ -185,7 +188,7 @@ export const OrderDetailModal = () => {
                   </span>
                 </div>
                 <span className="font-bold text-[#171917] dark:text-[#F0F5F2]">
-                  ${(item.qty * item.price).toFixed(2)}
+                  ₦{(item.qty * item.price).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
                 </span>
               </div>
             ))}
@@ -218,7 +221,7 @@ export const OrderDetailModal = () => {
                 Vendor (85%)
               </span>
               <span className="text-[16px] font-extrabold text-[#079B48] block mt-1 font-['Outfit']">
-                ${selectedOrder.split.vendor.toFixed(2)}
+                ₦{selectedOrder.split.vendor.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
               </span>
             </div>
             <div className="p-3 rounded-2xl bg-white dark:bg-[#181F1A] border border-[#EEEEEE] dark:border-[#27332A]">
@@ -226,7 +229,7 @@ export const OrderDetailModal = () => {
                 Rider Delivery
               </span>
               <span className="text-[16px] font-extrabold text-[#087F3C] block mt-1 font-['Outfit']">
-                ${selectedOrder.split.rider.toFixed(2)}
+                ₦{selectedOrder.split.rider.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
               </span>
             </div>
             <div className="p-3 rounded-2xl bg-white dark:bg-[#181F1A] border border-[#EEEEEE] dark:border-[#27332A]">
@@ -234,7 +237,7 @@ export const OrderDetailModal = () => {
                 Platform Margin
               </span>
               <span className="text-[16px] font-extrabold text-[#F28C00] block mt-1 font-['Outfit']">
-                ${selectedOrder.split.platform.toFixed(2)}
+                ₦{selectedOrder.split.platform.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
               </span>
             </div>
           </div>
@@ -242,7 +245,7 @@ export const OrderDetailModal = () => {
           <div className="flex justify-between items-center mt-3 pt-3 border-t border-[#079B48]/15 text-[13px] font-bold text-[#171917] dark:text-[#F0F5F2]">
             <span>Total Customer Settlement:</span>
             <span className="text-[18px] text-[#079B48] font-['Outfit']">
-              ${selectedOrder.totalAmount.toFixed(2)}
+              ₦{selectedOrder.totalAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
             </span>
           </div>
         </div>
@@ -261,7 +264,19 @@ export const OrderDetailModal = () => {
             )}
           </div>
 
-          <div className="flex gap-2 w-full sm:w-auto justify-end">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                downloadOrderReceipt(selectedOrder, user);
+                showToast(`Downloaded receipt for ${selectedOrder.orderNumber}!`, 'success');
+              }}
+              className="px-4 py-2.5 rounded-full border border-[#079B48]/30 bg-[#EAF8D8] dark:bg-[#14301C] text-[#079B48] dark:text-[#D5F28A] text-[13px] font-bold hover:bg-[#D5F28A] dark:hover:bg-[#1d4427] transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+            >
+              <IconsaxIcon name="receipt" size={15} color="#079B48" />
+              <span>Download Receipt</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setSelectedOrder(null)}

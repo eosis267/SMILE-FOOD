@@ -47,7 +47,7 @@ export const CustomerHomePage = () => {
       {/* Greeting Header */}
       <div>
         <h1 className="text-[26px] font-extrabold text-[#171917] dark:text-[#F0F5F2] font-['Outfit'] tracking-tight">
-          Hey {displayName.split(' ')[0]}!
+          Hey {(displayName || 'Friend').split(' ')[0]}!
         </h1>
         <p className="text-[14px] text-[#777D79] dark:text-[#8E9A92] mt-0.5">
           What would you like to eat today?
@@ -139,7 +139,7 @@ export const CustomerHomePage = () => {
                 <p className="text-[13px] font-semibold text-[#079B48] mb-1">{dish.restaurant}</p>
                 <p className="text-[15px] font-extrabold text-[#171917] dark:text-[#F0F5F2] font-['Outfit'] leading-tight mb-2">{dish.name}</p>
                 <div className="flex items-center justify-between">
-                  <p className="text-[17px] font-black text-[#079B48] font-['Outfit']">₦{(dish.price * 100).toLocaleString()}</p>
+                  <p className="text-[17px] font-black text-[#079B48] font-['Outfit']">₦{dish.price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</p>
                   <button
                     onClick={() => handleAddToCart(dish)}
                     className="w-9 h-9 rounded-full bg-[#079B48] flex items-center justify-center text-white hover:bg-[#087F3C] hover:scale-110 transition-all active:scale-95 shadow-md shadow-[#079B48]/25"

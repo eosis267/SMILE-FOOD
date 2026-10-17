@@ -13,7 +13,7 @@ export const SettingsPage = () => {
 
   // ─── A. Account Preferences State ───────────────────────────────────────────
   const [preferredLanguage, setPreferredLanguage] = useState(() => localStorage.getItem('smilefood_lang') || 'en');
-  const [currency, setCurrency] = useState(() => localStorage.getItem('smilefood_currency') || 'USD');
+  const [currency, setCurrency] = useState(() => localStorage.getItem('smilefood_currency') || 'NGN');
 
   const handleSavePreferences = () => {
     localStorage.setItem('smilefood_lang', preferredLanguage);
@@ -363,8 +363,8 @@ export const SettingsPage = () => {
                   onChange={(e) => setCurrency(e.target.value)}
                   className="w-full h-11 px-3.5 rounded-2xl border border-[#EEEEEE] dark:border-[#27332A] bg-[#F5F6F5] dark:bg-[#202922] text-[13px] font-medium text-[#171917] dark:text-[#F0F5F2] focus:outline-none focus:border-[#079B48]"
                 >
-                  <option value="USD">USD ($) — US Dollars</option>
                   <option value="NGN">NGN (₦) — Nigerian Naira</option>
+                  <option value="USD">USD ($) — US Dollars</option>
                   <option value="EUR">EUR (€) — Euros</option>
                 </select>
               </div>

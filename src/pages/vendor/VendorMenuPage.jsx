@@ -130,7 +130,7 @@ export const VendorMenuPage = () => {
 
             <div className="p-5 pt-0 flex items-center justify-between border-t border-[#EEEEEE] dark:border-[#27332A] mt-2">
               <span className="text-[20px] font-extrabold text-[#171917] dark:text-[#F0F5F2] font-['Outfit']">
-                ${item.price.toFixed(2)}
+                ₦{item.price.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
               </span>
 
               <div className="flex items-center gap-2">
@@ -184,7 +184,7 @@ export const VendorMenuPage = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[12px] font-bold text-[#171917] dark:text-[#F0F5F2] mb-1">Price ($)</label>
+                  <label className="block text-[12px] font-bold text-[#171917] dark:text-[#F0F5F2] mb-1">Price (₦)</label>
                   <input
                     type="number"
                     step="0.01"

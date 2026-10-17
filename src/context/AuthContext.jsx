@@ -201,12 +201,20 @@ export const AuthProvider = ({ children }) => {
   const signIn = async ({ email, password }) => {
     setAuthError(null);
     setLoading(true);
+    const cleanEmail = email?.toLowerCase().trim();
+    const isDemo = ['admin@smilefood.com', 'customer@smilefood.com', 'vendor@smilefood.com', 'rider@smilefood.com'].includes(cleanEmail);
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      if (error) {
+        if (isDemo || error.message?.includes('fetch') || error.message?.includes('placeholder') || error.message?.includes('Invalid API key')) {
+          return demoSignIn({ email, password });
+        }
+        throw error;
+      }
       return { success: true, data };
     } catch (err) {
-      if (err.message?.includes('fetch') || err.message?.includes('placeholder') || err.message?.includes('Invalid API key')) {
+      if (isDemo || err.message?.includes('fetch') || err.message?.includes('placeholder') || err.message?.includes('Invalid API key') || err.message?.includes('Failed to fetch')) {
         return demoSignIn({ email, password });
       }
       const safeError = sanitizeErrorResponse(err);
@@ -354,19 +362,39 @@ export const AuthProvider = ({ children }) => {
   };
 
   const demoSignIn = (roleOrEmail = ROLES.ADMIN) => {
-    let target = DEMO_ACCOUNTS[ROLES.ADMIN];
+    let target = null;
+    let pwd = '';
     const key = typeof roleOrEmail === 'object' ? roleOrEmail?.email : roleOrEmail;
-    if (typeof key === 'string') {
-      if (DEMO_ACCOUNTS[key]) {
-        target = DEMO_ACCOUNTS[key];
-      } else if (key.includes('customer') || key.includes('adeola')) {
-        target = DEMO_ACCOUNTS[ROLES.CUSTOMER];
-      } else if (key.includes('vendor') || key.includes('restaurant')) {
-        target = DEMO_ACCOUNTS[ROLES.VENDOR];
-      } else if (key.includes('rider') || key.includes('courier') || key.includes('tunde')) {
-        target = DEMO_ACCOUNTS[ROLES.RIDER];
+    if (typeof roleOrEmail === 'object' && roleOrEmail?.password) {
+      pwd = roleOrEmail.password;
+      if (pwd.length < 6) {
+        const errorMsg = 'Invalid credentials. Password must be at least 6 characters.';
+        setAuthError(errorMsg);
+        return { success: false, error: errorMsg };
       }
     }
+
+    if (typeof key === 'string') {
+      const clean = key.toLowerCase().trim();
+      if (clean === 'admin@smilefood.com' || clean === 'admin') {
+        target = DEMO_ACCOUNTS[ROLES.ADMIN];
+      } else if (clean === 'customer@smilefood.com' || clean === 'customer' || clean.includes('adeola')) {
+        target = DEMO_ACCOUNTS[ROLES.CUSTOMER];
+      } else if (clean === 'vendor@smilefood.com' || clean === 'vendor' || clean.includes('restaurant')) {
+        target = DEMO_ACCOUNTS[ROLES.VENDOR];
+      } else if (clean === 'rider@smilefood.com' || clean === 'rider' || clean.includes('courier') || clean.includes('tunde')) {
+        target = DEMO_ACCOUNTS[ROLES.RIDER];
+      } else if (DEMO_ACCOUNTS[clean]) {
+        target = DEMO_ACCOUNTS[clean];
+      }
+    }
+
+    if (!target) {
+      const errorMsg = 'Account not found. For testing, please use one of the test accounts provided in the README.';
+      setAuthError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+
     localStorage.setItem('smilefood_demo_user', JSON.stringify(target));
     setUser(target);
     setProfile(target.profile);

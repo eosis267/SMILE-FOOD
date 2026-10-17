@@ -12,6 +12,8 @@ export const Header = () => {
     unreadCount, 
     createDemoOrder,
     setIsLedgerModalOpen,
+    mobileMenuOpen,
+    setMobileMenuOpen,
     showToast 
   } = useApp();
 
@@ -46,20 +48,31 @@ export const Header = () => {
   const currentEmail = user?.email || 'mike.ops@smilefood.com';
 
   return (
-    <header className="h-[88px] px-8 flex items-center justify-between border-b border-[#EEEEEE] dark:border-[#27332A] bg-white/70 dark:bg-[#181F1A]/70 backdrop-blur-md sticky top-0 z-30 transition-colors">
-      {/* Personalized Greeting */}
-      <div className="flex flex-col justify-center">
-        <h1 className="text-[28px] font-extrabold tracking-tight text-[#171917] dark:text-[#F0F5F2] font-['Outfit'] leading-none">
-          Hello, {currentName.split(' ')[0]}!
-        </h1>
-        <p className="text-[12px] font-semibold text-[#777D79] dark:text-[#8E9A92] mt-1 flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#149B57] inline-block animate-pulse" />
-          Live Food Operations & Ledger active
-        </p>
+    <header className="h-[76px] sm:h-[88px] px-4 sm:px-8 flex items-center justify-between border-b border-[#EEEEEE] dark:border-[#27332A] bg-white/80 dark:bg-[#181F1A]/80 backdrop-blur-md sticky top-0 z-30 transition-colors">
+      {/* Mobile Hamburger & Greeting */}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(prev => !prev)}
+          className="lg:hidden w-10 h-10 rounded-2xl bg-[#F5F6F5] dark:bg-[#202922] flex items-center justify-center text-[#171917] dark:text-[#F0F5F2] hover:bg-[#EEEEEE] dark:hover:bg-[#27332A] transition-colors shrink-0"
+          aria-label="Toggle navigation menu"
+        >
+          <IconsaxIcon name={mobileMenuOpen ? "close" : "category"} size={20} />
+        </button>
+
+        <div className="flex flex-col justify-center">
+          <h1 className="text-[20px] sm:text-[26px] lg:text-[28px] font-extrabold tracking-tight text-[#171917] dark:text-[#F0F5F2] font-['Outfit'] leading-none">
+            Hello, {currentName.split(' ')[0]}!
+          </h1>
+          <p className="text-[11px] sm:text-[12px] font-semibold text-[#777D79] dark:text-[#8E9A92] mt-0.5 sm:mt-1 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#149B57] inline-block animate-pulse" />
+            <span className="truncate max-w-[150px] sm:max-w-none">Live Operations active</span>
+          </p>
+        </div>
       </div>
 
       {/* Pill-shaped Search Bar */}
-      <div className="relative w-80 md:w-96">
+      <div className="relative hidden md:block w-56 lg:w-80 xl:w-96">
         <div className="pill-search flex items-center px-4 py-2.5 gap-3 bg-[#F5F6F5] dark:bg-[#202922] border border-[#EEEEEE] dark:border-[#27332A]">
           <IconsaxIcon name="search" size={18} color="#777D79" />
           <input

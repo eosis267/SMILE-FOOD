@@ -3,6 +3,8 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import IconsaxIcon from '../components/IconsaxIcon';
 import Toolbar from '../components/Toolbar';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { downloadOrderReceipt } from '../lib/receiptGenerator';
 
 export const Overview = () => {
   const { 
@@ -14,6 +16,7 @@ export const Overview = () => {
     setSelectedOrder, 
     showToast 
   } = useApp();
+  const { user } = useAuth();
 
   const [activeMenuOrder, setActiveMenuOrder] = useState(null);
 
@@ -54,7 +57,8 @@ export const Overview = () => {
   };
 
   const handleDownloadReceipt = (order) => {
-    showToast(`Generated digital receipt for ${order.orderNumber}!`, 'success');
+    downloadOrderReceipt(order, user);
+    showToast(`Downloaded digital receipt for ${order.orderNumber}!`, 'success');
     setActiveMenuOrder(null);
   };
 
@@ -336,7 +340,7 @@ export const Overview = () => {
 
                         {/* Formatted Amount */}
                         <td className="py-4 px-3 font-extrabold text-[#171917] dark:text-[#F0F5F2] font-['Outfit'] text-[14px]">
-                          ${order.totalAmount.toFixed(2)}
+                          ₦{order.totalAmount.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
                         </td>
 
                         {/* Row-Level Action Menu (View Details, Copy Order Number, Download Receipt) */}

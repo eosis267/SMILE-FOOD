@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import IconsaxIcon from '../../components/IconsaxIcon';
 import BackButton from '../../components/BackButton';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import { downloadOrderReceipt } from '../../lib/receiptGenerator';
 
 const STATUS_STEPS = [
   { key: 'Created', label: 'Order Created', desc: 'Order submitted to kitchen' },
@@ -14,6 +16,7 @@ const STATUS_STEPS = [
 
 export const CustomerTrackingPage = () => {
   const { orders, showToast } = useApp();
+  const { user } = useAuth();
   const [currentStepIdx, setCurrentStepIdx] = useState(3); // Default at 'Preparing'
 
   const activeOrder = orders[0] || {
@@ -57,7 +60,18 @@ export const CustomerTrackingPage = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => {
+              downloadOrderReceipt(activeOrder, user);
+              showToast(`Receipt for ${activeOrder.orderNumber} downloaded!`, 'success');
+            }}
+            className="px-4 py-2 rounded-full border border-[#EEEEEE] dark:border-[#27332A] text-[#171917] dark:text-[#F0F5F2] hover:bg-[#F5F6F5] dark:hover:bg-[#202922] text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5"
+          >
+            <IconsaxIcon name="receipt" size={14} color="#079B48" />
+            <span>Receipt</span>
+          </button>
           <button
             onClick={advanceStep}
             disabled={currentStepIdx === STATUS_STEPS.length - 1}

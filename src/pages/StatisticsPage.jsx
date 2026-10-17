@@ -51,7 +51,7 @@ export const StatisticsPage = () => {
                 : 'text-[#777D79] dark:text-[#8E9A92]'
             }`}
           >
-            Gross Revenue ($)
+            Gross Revenue (₦)
           </button>
           <button
             onClick={() => setMetricView('orders')}
@@ -71,7 +71,7 @@ export const StatisticsPage = () => {
         <div className="smile-card p-6 bg-white dark:bg-[#181F1A] border border-[#EEEEEE] dark:border-[#27332A] rounded-[32px]">
           <span className="text-[12px] font-bold uppercase tracking-wider text-[#777D79]">Gross Processed GMV</span>
           <div className="text-[32px] font-extrabold text-[#171917] dark:text-[#F0F5F2] font-['Outfit'] mt-1">
-            $61,650.00
+            ₦61,650.00
           </div>
           <span className="text-[12px] font-semibold text-[#149B57] mt-1 inline-block">
             +14.8% vs last billing cycle
@@ -127,9 +127,9 @@ export const StatisticsPage = () => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EEEEEE" />
                 <XAxis dataKey="time" stroke="#777D79" fontSize={12} tickLine={false} />
-                <YAxis stroke="#777D79" fontSize={12} tickLine={false} tickFormatter={(val) => `$${val}`} />
+                <YAxis stroke="#777D79" fontSize={12} tickLine={false} tickFormatter={(val) => `₦${val}`} />
                 <Tooltip
-                  formatter={(val) => [`$${val}`, 'Revenue']}
+                  formatter={(val) => [`₦${val}`, 'Revenue']}
                   contentStyle={{
                     backgroundColor: '#181F1A',
                     borderColor: '#27332A',
@@ -183,7 +183,7 @@ export const StatisticsPage = () => {
                 </div>
                 <div className="flex justify-between items-center text-[12px] text-[#777D79] dark:text-[#8E9A92]">
                   <span>Total Settled:</span>
-                  <span className="font-bold text-[#171917] dark:text-[#F0F5F2]">${item.amount.toLocaleString()}</span>
+                  <span className="font-bold text-[#171917] dark:text-[#F0F5F2]">₦{item.amount.toLocaleString()}</span>
                 </div>
               </div>
             ))}

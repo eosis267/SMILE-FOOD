@@ -3,6 +3,8 @@ import IconsaxIcon from '../../components/IconsaxIcon';
 import BackButton from '../../components/BackButton';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import { downloadOrderReceipt } from '../../lib/receiptGenerator';
 
 const CUSTOMER_ORDERS = [
   {
@@ -41,6 +43,7 @@ const STATUS_CONFIG = {
 
 export const CustomerOrdersPage = () => {
   const { showToast } = useApp();
+  const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState('All');
   const [ratingOrder, setRatingOrder] = useState(null);
 
@@ -50,6 +53,11 @@ export const CustomerOrdersPage = () => {
     'On the Way': CUSTOMER_ORDERS.filter(o => o.status === 'On the Way').length,
     Delivered: CUSTOMER_ORDERS.filter(o => o.status === 'Delivered').length,
     Cancelled: CUSTOMER_ORDERS.filter(o => o.status === 'Cancelled').length,
+  };
+
+  const handleDownloadReceipt = (order) => {
+    downloadOrderReceipt(order, user);
+    showToast(`Receipt for ${order.id} downloaded!`, 'success');
   };
 
   const handleReorder = (order) => {
@@ -191,13 +199,26 @@ export const CustomerOrdersPage = () => {
                 {/* Spacer for cancelled / other states */}
                 {!order.rating && order.status !== 'Delivered' && ratingOrder !== order.id && <div />}
 
-                <button
-                  onClick={() => handleReorder(order)}
-                  className="px-4 py-2 rounded-full bg-[#EAF8D8] dark:bg-[#14301C] text-[#079B48] dark:text-[#D5F28A] text-[12px] font-bold hover:bg-[#D5F28A] transition-colors flex items-center gap-1.5"
-                >
-                  <IconsaxIcon name="refresh" size={13} color="#079B48" />
-                  Reorder
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadReceipt(order)}
+                    className="px-3.5 py-2 rounded-full border border-[#EEEEEE] dark:border-[#27332A] text-[#171917] dark:text-[#F0F5F2] hover:bg-[#F5F6F5] dark:hover:bg-[#202922] text-[12px] font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+                    title="Download Order Receipt PDF"
+                  >
+                    <IconsaxIcon name="receipt" size={13} color="#079B48" />
+                    <span>Download Receipt</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleReorder(order)}
+                    className="px-4 py-2 rounded-full bg-[#EAF8D8] dark:bg-[#14301C] text-[#079B48] dark:text-[#D5F28A] text-[12px] font-bold hover:bg-[#D5F28A] dark:hover:bg-[#1d4427] transition-colors flex items-center gap-1.5"
+                  >
+                    <IconsaxIcon name="refresh" size={13} color="#079B48" />
+                    Reorder
+                  </button>
+                </div>
               </div>
             </div>
           );

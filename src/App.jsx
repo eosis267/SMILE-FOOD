@@ -168,15 +168,27 @@ const AdminLayout = () => (
 // ─── Customer Portal Layout ───────────────────────────────────────────────────
 const CustomerHeader = () => {
   const { displayName, walletBalance } = useAuth();
+  const { mobileMenuOpen, setMobileMenuOpen } = useApp();
   return (
-    <div className="h-16 bg-white dark:bg-[#181F1A] border-b border-[#EEEEEE] dark:border-[#27332A] flex items-center justify-between px-6 shrink-0">
-      <p className="text-[14px] font-bold text-[#777D79] dark:text-[#8E9A92]">Customer Marketplace</p>
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#EAF8D8] dark:bg-[#14301C] text-[13px] font-bold text-[#079B48]">
-          <IconsaxIcon name="wallet" size={15} color="#079B48" />
+    <div className="h-16 bg-white dark:bg-[#181F1A] border-b border-[#EEEEEE] dark:border-[#27332A] flex items-center justify-between px-4 sm:px-6 shrink-0 sticky top-0 z-30 backdrop-blur-md">
+      <div className="flex items-center gap-2.5">
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="lg:hidden w-9 h-9 rounded-xl bg-[#F5F6F5] dark:bg-[#202922] flex items-center justify-center text-[#171917] dark:text-[#F0F5F2] hover:bg-[#EEEEEE] dark:hover:bg-[#27332A] transition-colors"
+          aria-label="Toggle navigation"
+        >
+          <IconsaxIcon name={mobileMenuOpen ? "close" : "category"} size={18} />
+        </button>
+        <p className="text-[13px] sm:text-[14px] font-bold text-[#777D79] dark:text-[#8E9A92]">Customer Marketplace</p>
+      </div>
+
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#EAF8D8] dark:bg-[#14301C] text-[12px] sm:text-[13px] font-bold text-[#079B48]">
+          <IconsaxIcon name="wallet" size={14} color="#079B48" />
           <span>₦{((walletBalance || 0) * 100).toLocaleString()}</span>
         </div>
-        <div className="w-9 h-9 rounded-full bg-[#EAF8D8] dark:bg-[#14301C] flex items-center justify-center font-bold text-[#079B48] text-[14px]">
+        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EAF8D8] dark:bg-[#14301C] flex items-center justify-center font-bold text-[#079B48] text-[13px] sm:text-[14px]">
           {displayName?.charAt(0)?.toUpperCase() || 'U'}
         </div>
       </div>
@@ -190,7 +202,7 @@ const CustomerLayout = () => (
       <CustomerSidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <CustomerHeader />
-        <main className="flex-1 p-6 sm:p-8 lg:p-9 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-20 lg:pb-8">
           <Outlet />
         </main>
       </div>
@@ -201,19 +213,31 @@ const CustomerLayout = () => (
 // ─── Vendor Portal Layout ─────────────────────────────────────────────────────
 const PortalHeader = ({ accentColor = '#079B48', label = '' }) => {
   const { displayName, walletBalance } = useAuth();
+  const { mobileMenuOpen, setMobileMenuOpen } = useApp();
   return (
-    <div className="h-16 bg-white dark:bg-[#181F1A] border-b border-[#EEEEEE] dark:border-[#27332A] flex items-center justify-between px-6 shrink-0">
-      <p className="text-[14px] font-bold text-[#777D79] dark:text-[#8E9A92]">{label}</p>
-      <div className="flex items-center gap-3">
+    <div className="h-16 bg-white dark:bg-[#181F1A] border-b border-[#EEEEEE] dark:border-[#27332A] flex items-center justify-between px-4 sm:px-6 shrink-0 sticky top-0 z-30 backdrop-blur-md">
+      <div className="flex items-center gap-2.5">
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="lg:hidden w-9 h-9 rounded-xl bg-[#F5F6F5] dark:bg-[#202922] flex items-center justify-center text-[#171917] dark:text-[#F0F5F2] hover:bg-[#EEEEEE] dark:hover:bg-[#27332A] transition-colors"
+          aria-label="Toggle navigation"
+        >
+          <IconsaxIcon name={mobileMenuOpen ? "close" : "category"} size={18} />
+        </button>
+        <p className="text-[13px] sm:text-[14px] font-bold text-[#777D79] dark:text-[#8E9A92]">{label}</p>
+      </div>
+
+      <div className="flex items-center gap-2 sm:gap-3">
         <div
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold text-white shadow-sm"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] sm:text-[13px] font-bold text-white shadow-sm"
           style={{ background: accentColor }}
         >
-          <IconsaxIcon name="wallet" size={15} color="white" />
+          <IconsaxIcon name="wallet" size={14} color="white" />
           <span>₦{((walletBalance || 0) * 100).toLocaleString()}</span>
         </div>
         <div
-          className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-[14px]"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-bold text-white text-[13px] sm:text-[14px]"
           style={{ background: accentColor }}
         >
           {displayName?.charAt(0)?.toUpperCase() || 'U'}
@@ -229,7 +253,7 @@ const VendorLayout = () => (
       <VendorSidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <PortalHeader accentColor="#F28C00" label="Vendor Kitchen Portal" />
-        <main className="flex-1 p-6 sm:p-8 lg:p-9 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>
@@ -244,7 +268,7 @@ const RiderLayout = () => (
       <RiderSidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <PortalHeader accentColor="#079B48" label="Rider Courier Hub" />
-        <main className="flex-1 p-6 sm:p-8 lg:p-9 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>

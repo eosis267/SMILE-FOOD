@@ -19,13 +19,24 @@ export const INITIAL_KPIS = {
     subtitle: "vs last month"
   },
   earnedFunds: {
-    value: "$1.5k",
-    rawAmount: 1542.80,
+    value: "₦1.5M",
+    rawAmount: 1542800,
     trend: "+18.3%",
     isPositive: true,
     subtitle: "net platform profit"
   }
 };
+
+export const INITIAL_WALLET_TRANSACTIONS = [
+  { id: 'wt-001', type: 'credit', description: 'Escrow release — Order #SF-84201', amount: 42.50, date: '2026-10-12 14:32', ref: 'ESC-84201', balance: 1500.00 },
+  { id: 'wt-002', type: 'credit', description: 'Escrow release — Order #SF-84156', amount: 35.00, date: '2026-10-12 11:15', ref: 'ESC-84156', balance: 1457.50 },
+  { id: 'wt-003', type: 'debit', description: 'Withdrawal to bank — GTB ****4521', amount: 200.00, date: '2026-10-11 18:00', ref: 'WDR-20241011', balance: 1422.50 },
+  { id: 'wt-004', type: 'credit', description: 'Top-up via Stripe Card', amount: 500.00, date: '2026-10-11 09:30', ref: 'TPU-STRIPE-0011', balance: 1622.50 },
+  { id: 'wt-005', type: 'credit', description: 'Escrow release — Order #SF-83990', amount: 28.75, date: '2026-10-10 20:15', ref: 'ESC-83990', balance: 1122.50 },
+  { id: 'wt-006', type: 'debit', description: 'Platform commission deduction', amount: 6.80, date: '2026-10-10 20:15', ref: 'COM-83990', balance: 1093.75 },
+  { id: 'wt-007', type: 'credit', description: 'Referral bonus — MIKE-50', amount: 50.00, date: '2026-10-09 12:00', ref: 'REF-MIKE50', balance: 1100.55 },
+  { id: 'wt-008', type: 'debit', description: 'Withdrawal to bank — GTB ****4521', amount: 100.00, date: '2026-10-08 15:30', ref: 'WDR-20241008', balance: 1050.55 },
+];
 
 export const REGIONAL_STATISTICS = [
   { name: "Central area", value: 52, orders: 445, color: "#079B48" },
@@ -274,7 +285,7 @@ export const INITIAL_NOTIFICATIONS = [
   {
     id: "notif-1",
     title: "New Order #SF-89241 Placed",
-    description: "Golden Wok Delights received order for $61.50. Escrow locked.",
+    description: "Golden Wok Delights received order for ₦61.50. Escrow locked.",
     time: "5m ago",
     read: false,
     type: "order"
@@ -282,7 +293,7 @@ export const INITIAL_NOTIFICATIONS = [
   {
     id: "notif-2",
     title: "Escrow Split Released",
-    description: "Order #SF-89238 marked delivered. $21.67 sent to vendor, $3.82 to rider.",
+    description: "Order #SF-89238 marked delivered. ₦21.67 sent to vendor, ₦3.82 to rider.",
     time: "45m ago",
     read: false,
     type: "payment"
